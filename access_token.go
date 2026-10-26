@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 // AccessToken holds everything required to
@@ -89,12 +89,12 @@ func (a *AccessToken) AddGrant(grant Grant) *AccessToken {
 // for the standard format.
 func (a *AccessToken) ToJWT() (string, error) {
 	claims := &twilioClaims{
-		jwt.StandardClaims{
-			Id:        a.APIKeySid + fmt.Sprintf("-%d", time.Now().UnixNano()),
+		jwt.RegisteredClaims{
+			ID:        a.APIKeySid + fmt.Sprintf("-%d", time.Now().UnixNano()),
 			Issuer:    a.APIKeySid,
 			Subject:   a.AccountSid,
-			NotBefore: a.NotBefore.Unix(),
-			ExpiresAt: a.ExpiresAt.Unix(),
+			NotBefore: jwt.NewNumericDate(a.NotBefore),
+			ExpiresAt: jwt.NewNumericDate(a.ExpiresAt),
 		},
 		&grantsClaim{
 			Identity: a.Identity,
@@ -117,7 +117,7 @@ func (a *AccessToken) ToJWT() (string, error) {
 // Private helpers to construct the JWT.
 
 type twilioClaims struct {
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 	Grants *grantsClaim `json:"grants"`
 }
 
